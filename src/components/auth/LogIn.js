@@ -1,20 +1,23 @@
 import React, { Component } from 'react';
 import FormErrors from "../FormErrors";
 import Validate from "../util/Validation";
+import {Auth} from 'aws-amplify';
 
 class LogIn extends Component {
   state = {
     username: "",
     password: "",
     errors: {
-      blankfield: false
+      blankfield: false,
+      cognito: null
     }
   };
 
   clearErrors = () => {
     this.setState({
       errors: {
-        blankfield: false
+        blankfield: false,
+        cognito: null
       }
     });
   };
@@ -32,6 +35,30 @@ class LogIn extends Component {
       });
     }
     //Integrate Cognito here on valid form submission
+
+      //Take the state variables to pass to the signUp method
+    //we added email as a required field and this needs to be
+    //passed to the api as an attribute.
+    try {
+      const user = await Auth.signIn(this.state.username,this.state.password);
+      console.log(user);
+      
+      this.props.auth.authenticateUser(true);
+      this.props.auth.setAuthUser(user);
+
+      this.props.history.push("/");
+    } catch (error){
+      let err = null;
+      !error.message ? err= {"message": error } : err = error;
+
+      this.setState({
+        errors: {
+          ...this.state.errors,
+          cognito: err
+        }
+      });
+    }
+
   };
 
   onInputChange = event => {
